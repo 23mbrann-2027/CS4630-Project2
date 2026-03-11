@@ -3,6 +3,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
 
 data = pd.read_csv(
     "Data/HIGGS.csv.gz",
@@ -36,3 +37,18 @@ acc2 = accuracy_score(y, 1 - clusters)
 
 print("Best clustering accuracy:", max(acc1, acc2))
 
+
+# PCA dimensions 
+pca_components = [2, 5, 10]
+X_pca_dict = {}  # store each reduced dataset
+
+for n in pca_components:
+    pca = PCA(n_components=n, random_state=42)
+    X_pca = pca.fit_transform(scaled_X)
+    
+    # Keep each PCA-reduced
+    X_pca_dict[n] = X_pca
+    
+    # show how much variance is preserved
+    explained_var = np.sum(pca.explained_variance_ratio_)
+    print(f"PCA with {n} components preserves {explained_var:.2%} of variance")
