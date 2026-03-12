@@ -4,6 +4,8 @@ from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+import time
 
 data = pd.read_csv(
     "Data/HIGGS.csv.gz",
@@ -38,7 +40,7 @@ acc2 = accuracy_score(y, 1 - clusters)
 print("Best clustering accuracy:", max(acc1, acc2))
 
 
-# PCA dimensions 
+# PCA dimensions (Part 2)
 pca_components = [2, 5, 10]
 X_pca_dict = {}  # store each reduced dataset
 
@@ -52,3 +54,38 @@ for n in pca_components:
     # show how much variance is preserved
     explained_var = np.sum(pca.explained_variance_ratio_)
     print(f"PCA with {n} components preserves {explained_var:.2%} of variance")
+
+
+#Part 3 of re running the Kmeans again with subsampling
+sample_size = 50000  # 50k rows for metric calculation
+
+for n, X_pca in X_pca_dict.items():
+    kmeans = MiniBatchKMeans(
+        n_clusters=2,
+        batch_size=10000,
+        n_init=10,
+        random_state=42
+    )
+    
+    # Fit k-Means on the full PCA-reduced data
+    start = time.time()
+    clusters = kmeans.fit_predict(X_pca)
+    train_time = time.time() - start
+    
+    # Subsample for metric calculation to avoid long wait time
+    if X_pca.shape[0] > sample_size:
+        idx = np.random.choice(X_pca.shape[0], size=sample_size, replace=False)
+        X_sample = X_pca[idx]
+        clusters_sample = clusters[idx]
+    else:
+        X_sample = X_pca
+        clusters_sample = clusters
+    
+    # Calculate metrics on the subsample
+    silhouette = silhouette_score(X_sample, clusters_sample)
+    db_index = davies_bouldin_score(X_sample, clusters_sample)
+    
+    print(f"\nPCA {n} components:")
+    print("Training time:", train_time)
+    print("Silhouette Score (sampled):", silhouette)
+    print("Davies-Bouldin Index (sampled):", db_index)
