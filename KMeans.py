@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 import time
+import matplotlib.pyplot as plt
 
 data = pd.read_csv(
     "Data/HIGGS.csv.gz",
@@ -31,11 +32,21 @@ kmeans = MiniBatchKMeans(
 
 #kmeans.fit(scaled_X)
 
-clusters = kmeans.fit_predict(scaled_X)
+start = time.time()
+clusters_raw = kmeans.fit_predict(scaled_X)
+time_raw = time.time() - start
+
+# Subsample for metrics
+idx = np.random.choice(scaled_X.shape[0], size=50000, replace=False)
+sil_raw = silhouette_score(scaled_X[idx], clusters_raw[idx])
+db_raw  = davies_bouldin_score(scaled_X[idx], clusters_raw[idx])
+
+print(f"Raw KMeans runtime: {time_raw:.2f}s")
+print(f"Silhouette: {sil_raw:.4f}  |  Davies-Bouldin: {db_raw:.4f}")
 
 # Find Algorithm Accuracy
-acc1 = accuracy_score(y, clusters)
-acc2 = accuracy_score(y, 1 - clusters)
+acc1 = accuracy_score(y, clusters_raw)
+acc2 = accuracy_score(y, 1 - clusters_raw)
 
 print("Best clustering accuracy:", max(acc1, acc2))
 
@@ -58,6 +69,7 @@ for n in pca_components:
 
 #Part 3 of re running the Kmeans again with subsampling
 sample_size = 50000  # 50k rows for metric calculation
+clusters_pca_dict = {}
 
 for n, X_pca in X_pca_dict.items():
     kmeans = MiniBatchKMeans(
@@ -70,6 +82,7 @@ for n, X_pca in X_pca_dict.items():
     # Fit k-Means on the full PCA-reduced data
     start = time.time()
     clusters = kmeans.fit_predict(X_pca)
+    clusters_pca_dict[n] = clusters
     train_time = time.time() - start
     
     # Subsample for metric calculation to avoid long wait time
@@ -84,8 +97,60 @@ for n, X_pca in X_pca_dict.items():
     # Calculate metrics on the subsample
     silhouette = silhouette_score(X_sample, clusters_sample)
     db_index = davies_bouldin_score(X_sample, clusters_sample)
-    
-    print(f"\nPCA {n} components:")
-    print("Training time:", train_time)
-    print("Silhouette Score (sampled):", silhouette)
-    print("Davies-Bouldin Index (sampled):", db_index)
+
+    # Compactness: mean distance from each point to its centroid
+    centroids = kmeans.cluster_centers_
+    compactness = np.mean([
+        np.mean(np.linalg.norm(X_sample[clusters_sample == k] - centroids[k], axis=1))
+        for k in range(2)
+    ])
+
+    # Separation: distance between the two centroids
+    separation = np.linalg.norm(centroids[0] - centroids[1])
+
+    print(f"Silhouette Score:    {silhouette:.4f}")
+    print(f"Davies-Bouldin:      {db_index:.4f}")
+    print(f"Compactness:         {compactness:.4f}")
+    print(f"Separation:          {separation:.4f}")
+
+
+# Scatter plots
+# Project raw data to 2D just for plotting
+pca_plot = PCA(n_components=2, random_state=42)
+X_2d = pca_plot.fit_transform(scaled_X)
+
+PLOT_N = 10000
+idx_plot = np.random.choice(len(X_2d), size=PLOT_N, replace=False)
+
+fig, axes = plt.subplots(1, 4, figsize=(22, 5))
+colors = ["#4C72B0", "#DD8452"]
+titles = ["Raw 28-dim (proj to 2D)", "PCA-2", "PCA-5", "PCA-10"]
+all_clusters = [clusters_raw, clusters_pca_dict[2], clusters_pca_dict[5], clusters_pca_dict[10]]
+
+for ax, title, lbls in zip(axes, titles, all_clusters):
+    for cls, col in zip([0, 1], colors):
+        mask = lbls[idx_plot] == cls
+        ax.scatter(X_2d[idx_plot][mask, 0], X_2d[idx_plot][mask, 1],
+                   c=col, s=3, alpha=0.4, label=f"Cluster {cls}")
+    ax.set_title(title)
+    ax.set_xlabel("PC1"); ax.set_ylabel("PC2")
+    ax.legend(markerscale=3)
+
+plt.tight_layout()
+plt.savefig("cluster_scatter.png", dpi=150)
+plt.show()
+
+
+pca_full = PCA(random_state=42).fit(scaled_X)
+cumvar = np.cumsum(pca_full.explained_variance_ratio_)
+
+plt.figure(figsize=(8, 4))
+plt.plot(range(1, 29), cumvar * 100, marker="o")
+plt.axhline(90, color="red", linestyle="--", label="90% threshold")
+plt.xlabel("Number of Components")
+plt.ylabel("Cumulative Variance (%)")
+plt.title("PCA Scree Plot")
+plt.legend()
+plt.tight_layout()
+plt.savefig("scree_plot.png", dpi=150)
+plt.show()
