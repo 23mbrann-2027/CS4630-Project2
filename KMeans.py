@@ -114,16 +114,17 @@ for n, X_pca in X_pca_dict.items():
     print(f"Separation:          {separation:.4f}")
 
 
-# Scatter plots
-# Project raw data to 2D just for plotting
+# ── Scatter plots ─────────────────────────────────────────────────────────────
 pca_plot = PCA(n_components=2, random_state=42)
 X_2d = pca_plot.fit_transform(scaled_X)
 
 PLOT_N = 10000
 idx_plot = np.random.choice(len(X_2d), size=PLOT_N, replace=False)
 
-fig, axes = plt.subplots(1, 4, figsize=(22, 5))
-colors = ["#4C72B0", "#DD8452"]
+fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+fig.suptitle("K-Means Clustering: Raw vs PCA-Reduced", fontsize=14, fontweight="bold")
+
+colors = ["steelblue", "tomato"]
 titles = ["Raw 28-dim (proj to 2D)", "PCA-2", "PCA-5", "PCA-10"]
 all_clusters = [clusters_raw, clusters_pca_dict[2], clusters_pca_dict[5], clusters_pca_dict[10]]
 
@@ -131,25 +132,62 @@ for ax, title, lbls in zip(axes, titles, all_clusters):
     for cls, col in zip([0, 1], colors):
         mask = lbls[idx_plot] == cls
         ax.scatter(X_2d[idx_plot][mask, 0], X_2d[idx_plot][mask, 1],
-                   c=col, s=3, alpha=0.4, label=f"Cluster {cls}")
-    ax.set_title(title)
-    ax.set_xlabel("PC1"); ax.set_ylabel("PC2")
-    ax.legend(markerscale=3)
+                   c=col, s=5, alpha=0.4, label=f"Cluster {cls}")
+    ax.set_title(title, fontsize=11, fontweight="bold")
+    ax.set_xlabel("PC1")
+    ax.set_ylabel("PC2")
+    ax.legend(markerscale=3, fontsize=9)
 
 plt.tight_layout()
 plt.savefig("cluster_scatter.png", dpi=150)
 plt.show()
 
 
+# ── Metrics bar chart ─────────────────────────────────────────────────────────
+# Pull metrics from the dicts already computed above
+idx_m = np.random.choice(scaled_X.shape[0], size=50000, replace=False)
+sil_scores = [sil_raw]
+db_scores  = [db_raw]
+
+for n in [2, 5, 10]:
+    X_s = X_pca_dict[n][idx_m]
+    c_s = clusters_pca_dict[n][idx_m]
+    sil_scores.append(silhouette_score(X_s, c_s))
+    db_scores.append(davies_bouldin_score(X_s, c_s))
+
+labels = ["Raw 28-dim", "PCA-2", "PCA-5", "PCA-10"]
+x = np.arange(len(labels))
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+fig.suptitle("Clustering Quality Metrics", fontsize=14, fontweight="bold")
+
+axes[0].bar(x, sil_scores, color="steelblue")
+axes[0].set_title("Silhouette Score (higher = better)")
+axes[0].set_xticks(x)
+axes[0].set_xticklabels(labels)
+axes[0].set_ylabel("Score")
+
+axes[1].bar(x, db_scores, color="tomato")
+axes[1].set_title("Davies-Bouldin Index (lower = better)")
+axes[1].set_xticks(x)
+axes[1].set_xticklabels(labels)
+axes[1].set_ylabel("Index")
+
+plt.tight_layout()
+plt.savefig("metrics_bar.png", dpi=150)
+plt.show()
+
+
+# ── Scree plot ────────────────────────────────────────────────────────────────
 pca_full = PCA(random_state=42).fit(scaled_X)
 cumvar = np.cumsum(pca_full.explained_variance_ratio_)
 
 plt.figure(figsize=(8, 4))
-plt.plot(range(1, 29), cumvar * 100, marker="o")
+plt.plot(range(1, 29), cumvar * 100, marker="o", color="steelblue")
 plt.axhline(90, color="red", linestyle="--", label="90% threshold")
 plt.xlabel("Number of Components")
 plt.ylabel("Cumulative Variance (%)")
-plt.title("PCA Scree Plot")
+plt.title("PCA Scree Plot", fontsize=13, fontweight="bold")
 plt.legend()
 plt.tight_layout()
 plt.savefig("scree_plot.png", dpi=150)
