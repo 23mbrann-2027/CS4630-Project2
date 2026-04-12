@@ -113,6 +113,10 @@ for n, X_pca in X_pca_dict.items():
     print(f"Compactness:         {compactness:.4f}")
     print(f"Separation:          {separation:.4f}")
 
+    acc1 = accuracy_score(y, clusters)
+    acc2 = accuracy_score(y, 1 - clusters)
+    print(f"PCA-{n} Clustering Accuracy: {max(acc1, acc2):.4f}")
+
 
 # Scatter plots
 pca_plot = PCA(n_components=2, random_state=42)
