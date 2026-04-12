@@ -114,7 +114,7 @@ for n, X_pca in X_pca_dict.items():
     print(f"Separation:          {separation:.4f}")
 
 
-# ── Scatter plots ─────────────────────────────────────────────────────────────
+# Scatter plots
 pca_plot = PCA(n_components=2, random_state=42)
 X_2d = pca_plot.fit_transform(scaled_X)
 
@@ -143,7 +143,7 @@ plt.savefig("cluster_scatter.png", dpi=150)
 plt.show()
 
 
-# ── Metrics bar chart ─────────────────────────────────────────────────────────
+# Metrics bar chart
 # Pull metrics from the dicts already computed above
 idx_m = np.random.choice(scaled_X.shape[0], size=50000, replace=False)
 sil_scores = [sil_raw]
@@ -178,7 +178,7 @@ plt.savefig("metrics_bar.png", dpi=150)
 plt.show()
 
 
-# ── Scree plot ────────────────────────────────────────────────────────────────
+# Scree plot
 pca_full = PCA(random_state=42).fit(scaled_X)
 cumvar = np.cumsum(pca_full.explained_variance_ratio_)
 
