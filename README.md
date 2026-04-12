@@ -1,3 +1,19 @@
-﻿# CS4630-Project2
+﻿# Python for Comutational/Data Sciences Project 2
 
-Dataset if can't download directly:https://drive.google.com/file/d/1DJkhe5-3jcx65zyg2lMm94wAD-uOLQGb/view?usp=sharing
+## Datasets Used
+UCI HIGGS Dataset: https://drive.google.com/drive/folders/18IRkPYp-Ggl_1izMaBKNv40SwGiuVJlM
+
+## File Execution
+
+### Phase 1
+1. Create a folder labeled `Data`, with subfolders named `processed` & `raw`
+
+2. Download the UCI HIGGS dataset from either the source or the google drive link provided above. Leaving it in it's compressed "csv.gz" format, move the file into the `raw` subfolder.
+    - Make sure to leave the name as `HIGGS.csv.gz`
+
+3. Download required packages
+
+### Phase 2
+1. To run all required tasks for this project, simply run the `KMeans.py` file.
+
+
