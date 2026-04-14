@@ -12,7 +12,7 @@ data = pd.read_csv(
     "Data/raw/HIGGS.csv.gz",
     header = None,
     compression = "gzip",
-    nrows = 1000000
+    nrows = 200000
 )
 
 # Need to seperate the labels and the features
