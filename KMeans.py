@@ -9,7 +9,7 @@ import time
 import matplotlib.pyplot as plt
 
 data = pd.read_csv(
-    "Data/HIGGS.csv.gz",
+    "Data/raw/HIGGS.csv.gz",
     header = None,
     compression = "gzip",
     nrows = 1000000
@@ -106,6 +106,9 @@ for n in pca_components:
     explained_var = np.sum(pca.explained_variance_ratio_)
     print(f"PCA with {n} components preserves {explained_var:.2%} of variance")
 
+    if n == 10:
+        pd.DataFrame(X_pca).to_csv("pca_10_data.csv", index=False)
+
 
 #Part 3 of re running the Kmeans again with subsampling
 sample_size = 50000  # 50k rows for metric calculation
@@ -192,6 +195,13 @@ for ax, title, lbls in zip(axes, titles, all_clusters):
 plt.tight_layout()
 plt.savefig("cluster_scatter_fixed.png", dpi=150)
 plt.show()
+
+np.save("clusters_raw_k2.npy", clusters_raw_k2)
+np.save("clusters_pca_2.npy", clusters_pca_dict[2])
+np.save("clusters_pca_5.npy", clusters_pca_dict[5])
+np.save("clusters_pca_10.npy", clusters_pca_dict[10])
+np.save("X_2d.npy", X_2d)
+np.save("y_labels.npy", y.values)
 
 # Metrics bar chart
 # Pull metrics from the dicts already computed above
