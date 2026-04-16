@@ -9,10 +9,10 @@ import time
 import matplotlib.pyplot as plt
 
 data = pd.read_csv(
-    "Data/raw/HIGGS.csv.gz",
+    "Data/HIGGS.csv.gz",
     header = None,
     compression = "gzip",
-    nrows = 200000
+    nrows = 1000000
 )
 
 # Need to seperate the labels and the features
@@ -105,9 +105,6 @@ for n in pca_components:
     # show how much variance is preserved
     explained_var = np.sum(pca.explained_variance_ratio_)
     print(f"PCA with {n} components preserves {explained_var:.2%} of variance")
-
-    if n == 10:
-        pd.DataFrame(X_pca).to_csv("pca_10_data.csv", index=False)
 
 
 #Part 3 of re running the Kmeans again with subsampling
